@@ -1,0 +1,7 @@
+{
+  "name": "Lotto CI - Analytics Engine",
+  "description": "Plateforme analytique et moteur statistique pour les tirages de la Loterie Nationale de Côte d'Ivoire (LONACI).",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
+
