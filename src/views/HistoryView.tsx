@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, FormEvent } from 'react';
 import {
   Search,
   Calendar,
@@ -10,6 +10,9 @@ import {
   ChevronLeft,
   ChevronRight,
   Filter,
+  PlusCircle,
+  X,
+  Check,
 } from 'lucide-react';
 import { Draw, GameType, DetectedHourInfo } from '../types';
 import LottoBall from '../components/LottoBall';
@@ -23,6 +26,14 @@ interface HistoryViewProps {
   onVerifySource?: (draw: Draw) => void;
   onNavigateTab: (tab: any) => void;
   onOpenNumberDetail?: (ballNumber: number) => void;
+  onAddManualDraw?: (data: {
+    date: string;
+    time: string;
+    gameName: string;
+    balls: [number, number, number, number, number];
+    machineBalls?: number[];
+    source?: string;
+  }) => { success: boolean; error?: string };
 }
 
 export default function HistoryView({
@@ -34,6 +45,7 @@ export default function HistoryView({
   onVerifySource: propVerifySource,
   onNavigateTab,
   onOpenNumberDetail,
+  onAddManualDraw,
 }: HistoryViewProps) {
   const onVerifySource = propVerifySource || onOpenDrawReport;
 
@@ -46,6 +58,16 @@ export default function HistoryView({
   const [selectedHourFilter, setSelectedHourFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [selectedBallFilter, setSelectedBallFilter] = useState<number | null>(null);
+
+  // Manual Add Modal State
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [newDrawDate, setNewDrawDate] = useState('04/09/2026');
+  const [newDrawTime, setNewDrawTime] = useState('13:00');
+  const [newDrawGame, setNewDrawGame] = useState('Loto Fortune');
+  const [newDrawBalls, setNewDrawBalls] = useState<string[]>(['', '', '', '', '']);
+  const [newDrawMachine, setNewDrawMachine] = useState<string[]>(['', '', '', '', '']);
+  const [addError, setAddError] = useState<string | null>(null);
+  const [addSuccess, setAddSuccess] = useState(false);
 
   // Pagination
   const [currentPage, setCurrentPage] = useState<number>(1);
@@ -89,6 +111,50 @@ export default function HistoryView({
     return filteredDraws.slice(start, start + pageSize);
   }, [filteredDraws, currentPage]);
 
+  const handleAddSubmit = (e: FormEvent) => {
+    e.preventDefault();
+    setAddError(null);
+
+    const balls = newDrawBalls.map((b) => parseInt(b.trim(), 10));
+    if (balls.some((b) => isNaN(b) || b < 1 || b > 90)) {
+      setAddError('Les 5 numéros gagnants doivent être compris entre 1 et 90.');
+      return;
+    }
+
+    if (new Set(balls).size !== 5) {
+      setAddError('Les 5 numéros doivent être tous distincts (aucun doublon autorisé).');
+      return;
+    }
+
+    const machineBalls = newDrawMachine
+      .map((b) => parseInt(b.trim(), 10))
+      .filter((b) => !isNaN(b) && b >= 1 && b <= 90);
+
+    if (onAddManualDraw) {
+      const res = onAddManualDraw({
+        date: newDrawDate,
+        time: newDrawTime,
+        gameName: newDrawGame,
+        balls: balls as [number, number, number, number, number],
+        machineBalls,
+        source: 'Saisie Directe Opérateur / Direct Loterie',
+      });
+
+      if (!res.success) {
+        setAddError(res.error || 'Erreur lors de l’enregistrement.');
+        return;
+      }
+    }
+
+    setAddSuccess(true);
+    setTimeout(() => {
+      setAddSuccess(false);
+      setShowAddModal(false);
+      setNewDrawBalls(['', '', '', '', '']);
+      setNewDrawMachine(['', '', '', '', '']);
+    }, 1200);
+  };
+
   const handlePageChange = (page: number) => {
     if (page >= 1 && page <= totalPages) {
       setCurrentPage(page);
@@ -114,10 +180,21 @@ export default function HistoryView({
           </p>
         </div>
 
-        <div className="flex items-center gap-2 self-start sm:self-auto">
+        <div className="flex items-center gap-2 self-start sm:self-auto flex-wrap">
+          <button
+            onClick={() => {
+              setAddError(null);
+              setShowAddModal(true);
+            }}
+            className="flex items-center gap-2 bg-[#10b981] hover:bg-[#4edea3] text-[#003824] px-3.5 py-2 rounded-lg font-mono text-xs font-bold transition-all shadow-md cursor-pointer"
+          >
+            <PlusCircle className="w-4 h-4" />
+            <span>Enregistrer un Tirage Sorti</span>
+          </button>
+
           <button
             onClick={() => onNavigateTab('exporter-donnees')}
-            className="flex items-center gap-2 bg-[#222a3d] hover:bg-[#2d3449] text-[#dae2fd] px-3.5 py-2 rounded-lg font-mono text-xs transition-colors border border-[#2d3449]"
+            className="flex items-center gap-2 bg-[#222a3d] hover:bg-[#2d3449] text-[#dae2fd] px-3.5 py-2 rounded-lg font-mono text-xs transition-colors border border-[#2d3449] cursor-pointer"
           >
             <Download className="w-4 h-4 text-[#7bd0ff]" />
             <span>Exporter l'historique</span>
@@ -384,7 +461,7 @@ export default function HistoryView({
             <button
               onClick={() => handlePageChange(currentPage - 1)}
               disabled={currentPage === 1}
-              className="p-1.5 rounded-lg bg-[#171f33] text-[#dae2fd] hover:bg-[#222a3d] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              className="p-1.5 rounded-lg bg-[#171f33] text-[#dae2fd] hover:bg-[#222a3d] disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
@@ -396,13 +473,173 @@ export default function HistoryView({
             <button
               onClick={() => handlePageChange(currentPage + 1)}
               disabled={currentPage === totalPages}
-              className="p-1.5 rounded-lg bg-[#171f33] text-[#dae2fd] hover:bg-[#222a3d] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              className="p-1.5 rounded-lg bg-[#171f33] text-[#dae2fd] hover:bg-[#222a3d] disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer"
             >
               <ChevronRight className="w-4 h-4" />
             </button>
           </div>
         </div>
       </div>
+
+      {/* Manual Draw Creation Modal */}
+      {showAddModal && (
+        <div className="fixed inset-0 bg-black/75 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-[#171f33] border border-[#222a3d] rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl animate-in zoom-in-95 duration-150">
+            {/* Modal Header */}
+            <div className="bg-[#131b2e] p-4 sm:p-5 border-b border-[#222a3d] flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-[#10b981]/20 flex items-center justify-center text-[#4edea3]">
+                  <PlusCircle className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="font-sans text-base text-[#dae2fd] font-bold">
+                    Enregistrer un Nouveau Tirage Sorti
+                  </h3>
+                  <span className="font-mono text-[10px] text-[#86948a]">
+                    Validation immédiate &amp; Recalcul automatique des statistiques
+                  </span>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowAddModal(false)}
+                className="text-[#bbcabf] hover:text-[#dae2fd] p-1 rounded-lg hover:bg-[#222a3d]"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Modal Form */}
+            <form onSubmit={handleAddSubmit} className="p-5 space-y-4 font-mono text-xs">
+              {addError && (
+                <div className="bg-[#ff8f73]/15 border border-[#ff8f73]/40 p-3 rounded-lg text-[#ff8f73] flex items-center gap-2">
+                  <AlertTriangle className="w-4 h-4 flex-shrink-0" />
+                  <span>{addError}</span>
+                </div>
+              )}
+
+              {addSuccess && (
+                <div className="bg-[#10b981]/15 border border-[#10b981]/40 p-3 rounded-lg text-[#4edea3] flex items-center gap-2">
+                  <Check className="w-4 h-4 flex-shrink-0" />
+                  <span>Tirage enregistré et injecté dans la base avec succès !</span>
+                </div>
+              )}
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="text-[#bbcabf] text-[11px] block">Date (JJ/MM/AAAA) :</label>
+                  <input
+                    type="text"
+                    required
+                    value={newDrawDate}
+                    onChange={(e) => setNewDrawDate(e.target.value)}
+                    placeholder="Ex: 04/09/2026"
+                    className="w-full bg-[#131b2e] text-[#dae2fd] p-2 rounded-lg border border-[#222a3d] focus:outline-none focus:border-[#4edea3]"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[#bbcabf] text-[11px] block">Heure Officielle :</label>
+                  <select
+                    value={newDrawTime}
+                    onChange={(e) => setNewDrawTime(e.target.value)}
+                    className="w-full bg-[#131b2e] text-[#dae2fd] p-2 rounded-lg border border-[#222a3d] focus:outline-none focus:border-[#4edea3] cursor-pointer"
+                  >
+                    <option value="07:00">07:00 (Digital Réveil)</option>
+                    <option value="08:00">08:00 (Digital Matin)</option>
+                    <option value="10:00">10:00 (Loto Diamant)</option>
+                    <option value="13:00">13:00 (Loto Fortune)</option>
+                    <option value="16:00">16:00 (Loto Espoir)</option>
+                    <option value="18:00">18:00 (National CI)</option>
+                    <option value="21:00">21:00 (Digital Soir)</option>
+                    <option value="23:00">23:00 (Digital Nuit)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-[#bbcabf] text-[11px] block">Nom du Jeu :</label>
+                <input
+                  type="text"
+                  required
+                  value={newDrawGame}
+                  onChange={(e) => setNewDrawGame(e.target.value)}
+                  placeholder="Ex: Loto Fortune / National CI"
+                  className="w-full bg-[#131b2e] text-[#dae2fd] p-2 rounded-lg border border-[#222a3d] focus:outline-none focus:border-[#4edea3]"
+                />
+              </div>
+
+              {/* 5 Winning Balls */}
+              <div className="space-y-1.5 pt-1">
+                <label className="text-[#4edea3] text-[11px] font-bold block">
+                  5 Numéros Gagnants Sortis (1 - 90) :
+                </label>
+                <div className="grid grid-cols-5 gap-2">
+                  {newDrawBalls.map((val, idx) => (
+                    <input
+                      key={idx}
+                      type="number"
+                      min={1}
+                      max={90}
+                      required
+                      placeholder={`N°${idx + 1}`}
+                      value={val}
+                      onChange={(e) => {
+                        const copy = [...newDrawBalls];
+                        copy[idx] = e.target.value;
+                        setNewDrawBalls(copy);
+                      }}
+                      className="bg-[#131b2e] text-[#dae2fd] p-2.5 rounded-lg border border-[#222a3d] text-center font-bold focus:outline-none focus:border-[#4edea3]"
+                    />
+                  ))}
+                </div>
+              </div>
+
+              {/* 5 Machine Balls (Optional) */}
+              <div className="space-y-1.5 pt-1">
+                <label className="text-[#86948a] text-[11px] block">
+                  5 Numéros Machine (Optionnel) :
+                </label>
+                <div className="grid grid-cols-5 gap-2">
+                  {newDrawMachine.map((val, idx) => (
+                    <input
+                      key={idx}
+                      type="number"
+                      min={1}
+                      max={90}
+                      placeholder={`M${idx + 1}`}
+                      value={val}
+                      onChange={(e) => {
+                        const copy = [...newDrawMachine];
+                        copy[idx] = e.target.value;
+                        setNewDrawMachine(copy);
+                      }}
+                      className="bg-[#131b2e] text-[#bbcabf] p-2 rounded-lg border border-[#222a3d] text-center focus:outline-none focus:border-[#7bd0ff]"
+                    />
+                  ))}
+                </div>
+              </div>
+
+              <div className="pt-3 border-t border-[#222a3d] flex items-center justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => setShowAddModal(false)}
+                  className="px-4 py-2 rounded-lg text-[#bbcabf] hover:bg-[#222a3d] transition-colors cursor-pointer"
+                >
+                  Annuler
+                </button>
+                <button
+                  type="submit"
+                  disabled={addSuccess}
+                  className="bg-[#10b981] hover:bg-[#4edea3] text-[#003824] px-5 py-2 rounded-lg font-bold transition-colors flex items-center gap-2 cursor-pointer shadow-md disabled:opacity-50"
+                >
+                  <Check className="w-4 h-4" />
+                  <span>{addSuccess ? 'Enregistré !' : 'Enregistrer le Tirage'}</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

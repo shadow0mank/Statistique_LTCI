@@ -28,6 +28,8 @@ interface DashboardViewProps {
   ballStats?: BallStat[];
   weights?: FormulaWeights;
   selectedGame?: GameType | 'all';
+  isSyncing?: boolean;
+  onSync?: () => Promise<any>;
   onNavigateTab: (tab: any) => void;
   onOpenDrawReport: (draw: Draw) => void;
   onOpenFormulaModal: () => void;
@@ -41,6 +43,8 @@ export default function DashboardView({
   ballStats,
   weights,
   selectedGame,
+  isSyncing = false,
+  onSync,
   onNavigateTab,
   onOpenDrawReport,
   onOpenFormulaModal,
@@ -145,29 +149,40 @@ export default function DashboardView({
           </div>
 
           <div className="space-y-2 pt-3">
-            <button
-              onClick={() => onNavigateTab('synchronisation-automatique')}
-              className="w-full bg-[#10b981] hover:bg-[#4edea3] text-[#003824] font-mono text-xs font-bold py-2.5 px-3 rounded-lg flex items-center justify-center gap-2 transition-colors shadow-sm"
-            >
-              <RefreshCw className="w-4 h-4" />
-              <span>Gérer les Synchronisations</span>
-            </button>
-
-            <div className="grid grid-cols-2 gap-2">
+            <div className="flex items-center gap-2">
               <button
-                onClick={() => onNavigateTab('importer-donnees')}
-                className="bg-[#222a3d] hover:bg-[#2d3449] text-[#dae2fd] font-mono text-[11px] py-1.5 px-2 rounded-lg flex items-center justify-center gap-1.5 transition-colors border border-[#2d3449]"
+                onClick={onSync ? () => onSync() : () => onNavigateTab('synchronisation-automatique')}
+                disabled={isSyncing}
+                className="flex-1 bg-[#10b981] hover:bg-[#4edea3] text-[#003824] font-mono text-xs font-bold py-2.5 px-3 rounded-lg flex items-center justify-center gap-2 transition-colors shadow-sm cursor-pointer disabled:opacity-50"
               >
-                <Upload className="w-3.5 h-3.5 text-[#7bd0ff]" />
-                <span>Importer CSV</span>
+                <RefreshCw className={`w-4 h-4 ${isSyncing ? 'animate-spin' : ''}`} />
+                <span>{isSyncing ? 'Actualisation...' : 'Actualiser les Tirages'}</span>
               </button>
 
               <button
-                onClick={() => onNavigateTab('code-sql-php')}
-                className="bg-[#222a3d] hover:bg-[#2d3449] text-[#dae2fd] font-mono text-[11px] py-1.5 px-2 rounded-lg flex items-center justify-center gap-1.5 transition-colors border border-[#2d3449]"
+                onClick={() => onNavigateTab('synchronisation-automatique')}
+                className="bg-[#222a3d] hover:bg-[#2d3449] text-[#dae2fd] p-2.5 rounded-lg border border-[#2d3449] transition-colors cursor-pointer"
+                title="Paramètres des 5 sources"
               >
-                <span className="text-[#4edea3] font-bold">&lt;/&gt;</span>
-                <span>Code WAMP</span>
+                <ExternalLink className="w-4 h-4 text-[#7bd0ff]" />
+              </button>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                onClick={() => onNavigateTab('prochain-tirage')}
+                className="bg-[#ec6a06]/20 hover:bg-[#ec6a06]/30 text-[#ffdbca] font-mono text-[11px] py-1.5 px-2 rounded-lg flex items-center justify-center gap-1.5 transition-colors border border-[#ec6a06]/40 cursor-pointer font-bold"
+              >
+                <Clock className="w-3.5 h-3.5 text-[#ec6a06]" />
+                <span>Pronostics du Jour</span>
+              </button>
+
+              <button
+                onClick={() => onNavigateTab('importer-donnees')}
+                className="bg-[#222a3d] hover:bg-[#2d3449] text-[#dae2fd] font-mono text-[11px] py-1.5 px-2 rounded-lg flex items-center justify-center gap-1.5 transition-colors border border-[#2d3449] cursor-pointer"
+              >
+                <Upload className="w-3.5 h-3.5 text-[#7bd0ff]" />
+                <span>Importer CSV</span>
               </button>
             </div>
           </div>

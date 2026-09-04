@@ -127,3 +127,56 @@ export interface MonthlyVolume {
   percentage?: number;
   averageSum?: number;
 }
+
+export type SourceType =
+  | 'official_portal'
+  | 'ussd_gateway'
+  | 'gazette_archive'
+  | 'cedeao_hub'
+  | 'custom_api';
+
+export interface DataSource {
+  id: string;
+  name: string;
+  category: SourceType;
+  url: string;
+  status: 'ONLINE' | 'STANDBY' | 'SYNCING' | 'ERROR';
+  lastSync: string;
+  totalRecords: number;
+  latencyMs: number;
+  reliabilityPercent: number;
+  isPrimary: boolean;
+  description: string;
+  syncFrequency: string; // e.g. "Temps Réel", "Chaque Heure", "Quotidien"
+  protocol: 'REST API' | 'USSD Gateway' | 'Web Scraping' | 'Flux Certifié';
+}
+
+export interface DailyHourPrediction {
+  hour: string; // e.g. "10:00"
+  slotName: string; // e.g. "Matinée - Loto Diamant"
+  gameName: string; // e.g. "Loto Diamant"
+  status: 'COMPLETED' | 'LIVE' | 'UPCOMING';
+  drawDate: string; // e.g. "04/09/2026"
+  banker: number; // Le numéro favori / banker n°1
+  bankerScore: number; // Score statistique (ex: 95)
+  bankerGap: number; // Écart actuel
+  twoSure: [number, number]; // Les 2 numéros les plus probables ensemble
+  twoSureScore: number;
+  top5: number[]; // Les 5 numéros recommandés
+  machinePicks: number[]; // 5 numéros machine recommandés
+  confidence: number; // Indice global 0-100%
+  expectedSumRange: [number, number];
+  frequentPairs: [number, number][];
+  actualDraw?: Draw; // Si le tirage a déjà eu lieu dans la base
+  hitCount?: number; // Nombre de numéros gagnés si tirage terminé
+  bankerHit?: boolean;
+}
+
+export interface DailyPredictionDay {
+  date: string; // e.g. "04/09/2026"
+  isoDate: string; // e.g. "2026-09-04"
+  dayName: string; // e.g. "Vendredi"
+  isToday: boolean;
+  slots: DailyHourPrediction[];
+}
+
