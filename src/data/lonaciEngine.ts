@@ -1,44 +1,16 @@
 import { Draw, BallStat, DetectedHourInfo, HourlyNumberStat, FormulaWeights, SyncLog } from '../types';
-import rawData from './real_lonaci_draws.json';
+import officialDraws from './lotobonheur_official_history.json';
 
-// Transform raw draws from JSON into strongly-typed Draw objects
+// Transform raw draws from official JSON into strongly-typed Draw objects
 export function loadInitialDraws(): Draw[] {
-  const rawList = (rawData as any).draws || [];
-  return rawList.map((d: any, index: number) => {
-    const balls = (d.winning_numbers || [1, 2, 3, 4, 5]) as [number, number, number, number, number];
-    const sum = balls.reduce((acc, n) => acc + n, 0);
-    const evenCount = balls.filter((n) => n % 2 === 0).length;
-    const oddCount = 5 - evenCount;
-    const sorted = [...balls].sort((a, b) => a - b);
-    let maxGap = 0;
-    for (let i = 1; i < sorted.length; i++) {
-      const gap = sorted[i] - sorted[i - 1];
-      if (gap > maxGap) maxGap = gap;
-    }
-
-    return {
-      id: d.id || `draw_${index + 1}`,
-      drawNumber: rawList.length - index,
-      game: (d.game_name || 'Loto Bonheur').toLowerCase().replace(/\s+/g, '-'),
-      gameName: d.game_name || 'Loto Bonheur',
-      date: d.draw_date || '01/09/2026',
-      time: d.draw_time || '10:00',
-      machineId: d.category === 'night' ? 'LONACI-DIGITAL-01' : 'LONACI-STANDARD-02',
-      hash: d.hash || 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',
-      balls: balls,
-      machineBalls: d.machine_numbers || [],
-      sum: sum,
-      evenCount: evenCount,
-      oddCount: oddCount,
-      maxGap: maxGap,
-      source: d.source || 'lotobonheur.ci',
-      sourceUrl: d.source_url || 'https://lotobonheur.ci/resultats',
-      retrievedAt: d.retrieved_at || new Date().toISOString(),
-      status: (d.status as any) || 'CONFORME',
-      isVerified: true,
-      notes: d.category === 'night' ? 'Tirage Digital sécurisé' : 'Tirage Standard physique',
-    };
-  });
+  return (officialDraws as Draw[]).map((d, index) => ({
+    ...d,
+    drawNumber: (officialDraws.length - index),
+    source: 'https://lotobonheur.ci/resultats',
+    sourceUrl: 'https://lotobonheur.ci/resultats',
+    status: 'CONFORME' as const,
+    isVerified: true,
+  }));
 }
 
 // 1. DYNAMIC DETECTION OF HOURS FROM THE DATABASE (Never hardcoded!)

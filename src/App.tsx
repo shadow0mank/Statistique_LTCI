@@ -242,6 +242,7 @@ export default function App() {
               isSyncing={isSyncing}
               onSync={handleGlobalSync}
               onAddCustomSource={handleAddCustomSource}
+              onImportDraws={handleImportSuccess}
             />
           )}
 

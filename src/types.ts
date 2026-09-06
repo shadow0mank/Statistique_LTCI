@@ -129,10 +129,13 @@ export interface MonthlyVolume {
 }
 
 export type SourceType =
+  | 'lotobonheur_ci_official'
+  | 'lotto_matrice_plus_app'
+  | 'lotto_matrice_plus_db'
+  | 'lotto_matrice_plus_flux'
+  | 'lotto_matrice_plus_matrix'
+  | 'lotto_matrice_plus_import'
   | 'official_portal'
-  | 'ussd_gateway'
-  | 'gazette_archive'
-  | 'cedeao_hub'
   | 'custom_api';
 
 export interface DataSource {
@@ -148,7 +151,14 @@ export interface DataSource {
   isPrimary: boolean;
   description: string;
   syncFrequency: string; // e.g. "Temps Réel", "Chaque Heure", "Quotidien"
-  protocol: 'REST API' | 'USSD Gateway' | 'Web Scraping' | 'Flux Certifié';
+  protocol:
+    | 'Lotto Matrice + Core'
+    | 'Flux Mobile'
+    | 'Extraction Matrice'
+    | 'REST API'
+    | 'Fichier / Export'
+    | 'API REST / Scraping Direct LONACI'
+    | 'Application Mobile / Presse-Papier';
 }
 
 export interface DailyHourPrediction {
@@ -170,6 +180,11 @@ export interface DailyHourPrediction {
   actualDraw?: Draw; // Si le tirage a déjà eu lieu dans la base
   hitCount?: number; // Nombre de numéros gagnés si tirage terminé
   bankerHit?: boolean;
+  // Lotto Matrice Plus Specific Analytics
+  secretCode?: number; // Code secret / code caché calculé selon Lotto Matrice Plus
+  matrixPicks?: number[]; // Les 5 numéros issus de la matrice du jour
+  rejectedBalls?: number[]; // Pions rejetés déconseillés par la matrice
+  crossNumbers?: number[]; // 4 numéros de la Croix & Pyramide
 }
 
 export interface DailyPredictionDay {

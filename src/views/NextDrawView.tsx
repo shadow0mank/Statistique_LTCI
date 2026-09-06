@@ -265,6 +265,60 @@ export default function NextDrawView({
               </div>
             </div>
           </div>
+
+          {/* Lotto Matrice Plus Proprietary Strip */}
+          <div className="mt-4 pt-4 border-t border-[#222a3d]/70 grid grid-cols-1 md:grid-cols-3 gap-3 bg-[#0e1628]/60 p-3.5 rounded-xl font-mono text-xs">
+            {/* Secret Code */}
+            <div className="flex items-center gap-3 bg-[#171f33] p-3 rounded-lg border border-[#222a3d]">
+              <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-[#eab308] to-[#ca8a04] text-[#000] font-black text-sm flex items-center justify-center shadow-md shadow-[#eab308]/20 border border-[#fef08a]">
+                {imminentSlot.secretCode || 42}
+              </div>
+              <div>
+                <span className="text-[10px] text-[#facc15] font-bold uppercase tracking-wider block">
+                  🔑 Code Secret / Caché
+                </span>
+                <span className="text-[#dae2fd] font-bold text-xs">
+                  Pivot #{imminentSlot.secretCode || 42}
+                </span>
+                <span className="text-[10px] text-[#86948a] block">Lotto Matrice Plus</span>
+              </div>
+            </div>
+
+            {/* Cross & Pyramid Numbers */}
+            <div className="bg-[#171f33] p-3 rounded-lg border border-[#222a3d] space-y-1.5">
+              <span className="text-[10px] text-[#7bd0ff] font-bold uppercase tracking-wider block">
+                ✝️ Croix de Sommation (4 Pions)
+              </span>
+              <div className="flex items-center gap-1.5 flex-wrap">
+                {(imminentSlot.crossNumbers || [12, 34, 56, 78]).map((num) => (
+                  <span
+                    key={num}
+                    onClick={() => onOpenNumberDetail(num)}
+                    className="cursor-pointer bg-[#131b2e] hover:bg-[#222a3d] text-[#7bd0ff] px-2 py-0.5 rounded font-bold border border-[#7bd0ff]/30 text-xs"
+                  >
+                    {num < 10 ? `0${num}` : num}
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            {/* Rejected Pawns */}
+            <div className="bg-[#171f33] p-3 rounded-lg border border-[#222a3d] space-y-1.5">
+              <span className="text-[10px] text-[#f87171] font-bold uppercase tracking-wider block">
+                🚫 Pions Rejetés (À Éviter)
+              </span>
+              <div className="flex items-center gap-1.5 flex-wrap">
+                {(imminentSlot.rejectedBalls || [9, 21, 54, 88]).map((num) => (
+                  <span
+                    key={num}
+                    className="bg-[#ef4444]/10 text-[#fca5a5] line-through px-1.5 py-0.5 rounded font-bold border border-[#ef4444]/20 text-xs"
+                  >
+                    {num < 10 ? `0${num}` : num}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
@@ -326,15 +380,22 @@ export default function NextDrawView({
                         {slot.hour} GMT
                       </span>
 
-                      {hasResult ? (
-                        <span className="bg-[#10b981]/20 text-[#4edea3] font-mono text-[10px] px-2 py-0.5 rounded-full font-bold">
-                          Résultats Sortis
-                        </span>
-                      ) : (
-                        <span className="bg-[#222a3d] text-[#bbcabf] font-mono text-[10px] px-2 py-0.5 rounded-full">
-                          À Venir
-                        </span>
-                      )}
+                      <div className="flex items-center gap-1.5">
+                        {slot.secretCode && (
+                          <span className="bg-[#eab308]/20 text-[#facc15] font-mono text-[9px] px-2 py-0.5 rounded-full font-bold border border-[#eab308]/30" title="Code Secret Lotto Matrice Plus">
+                            Code #{slot.secretCode}
+                          </span>
+                        )}
+                        {hasResult ? (
+                          <span className="bg-[#10b981]/20 text-[#4edea3] font-mono text-[10px] px-2 py-0.5 rounded-full font-bold">
+                            Sorti
+                          </span>
+                        ) : (
+                          <span className="bg-[#222a3d] text-[#bbcabf] font-mono text-[10px] px-2 py-0.5 rounded-full">
+                            À Venir
+                          </span>
+                        )}
+                      </div>
                     </div>
 
                     <div className="flex items-center justify-between">
@@ -458,6 +519,28 @@ export default function NextDrawView({
                           ))}
                         </div>
                       </div>
+
+                      {/* Lotto Matrice Plus Extra Row */}
+                      {(slot.crossNumbers || slot.rejectedBalls) && (
+                        <div className="pt-2 border-t border-[#222a3d]/70 space-y-1.5 font-mono text-[10px]">
+                          {slot.crossNumbers && (
+                            <div className="flex items-center justify-between text-[#7bd0ff]">
+                              <span className="text-[#86948a]">Croix Matrice :</span>
+                              <span className="font-bold">
+                                {slot.crossNumbers.join(' • ')}
+                              </span>
+                            </div>
+                          )}
+                          {slot.rejectedBalls && (
+                            <div className="flex items-center justify-between text-[#fca5a5]">
+                              <span className="text-[#86948a]">Pions Rejetés :</span>
+                              <span className="line-through">
+                                {slot.rejectedBalls.join(', ')}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
                   </div>
 
